@@ -1,5 +1,6 @@
 class Gitlab::Client
   # Defines methods related to builds.
+  # @see https://github.com/gitlabhq/gitlabhq/blob/master/doc/ci/triggers/README.md
   # @see https://github.com/gitlabhq/gitlabhq/blob/master/doc/api/build_triggers.md
   module BuildTriggers
     # Gets a list of the project's build triggers
@@ -21,7 +22,7 @@ class Gitlab::Client
     # @param  [Integer] project The ID of a project.
     # @param  [String] token The token of a trigger.
     # @return [Gitlab::ObjectifiedHash] The trigger.
-    def trigger(project, token)
+    def trigger_detail(project, token)
       get("/projects/#{project}/triggers/#{token}")
     end
 
@@ -46,6 +47,35 @@ class Gitlab::Client
     # @return [Gitlab::ObjectifiedHash] The trigger.
     def remove_trigger(project, token)
       delete("/projects/#{project}/triggers/#{token}")
+    end
+
+    # Trigger the given project build trigger.
+    #
+    # @see https://github.com/gitlabhq/gitlabhq/blob/master/doc/ci/triggers/README.md
+    #
+    # @example
+    #   Gitlab.trigger_build(5, '7b9148c158980bbd9bcea92c17522d', 'master')
+    #   Gitlab.trigger_build(5, '7b9148c158980bbd9bcea92c17522d', 'master', { variable1: "value", variable2: "value2" })
+    #
+    # @param  [Integer] project The ID of a project.
+    # @param  [String] token The token of a trigger.
+    # @param  [String] ref Branch name, tag name or commit SHA to build.
+    # @param  [Hash] variables A set of build variables to use for the build. (optional)
+    # @return [Gitlab::ObjectifiedHash] The trigger.
+    # @note This method doesn't require private_token to be set.
+    def trigger_build(project, token, ref, variables={})
+      # Execute trigger endpoint is not under the API path
+      endpoint = URI(@endpoint)
+      endpoint.path = "/projects/#{project}/trigger/builds"
+
+      options = {body: {
+        token: token,
+        ref: ref,
+        variables: variables
+      }}
+      set_httparty_config options
+
+      self.class.post(endpoint, options)
     end
   end
 end

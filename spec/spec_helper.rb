@@ -20,7 +20,7 @@ end
 
 RSpec.configure do |config|
   config.before(:all) do
-    Gitlab.endpoint = 'https://api.example.com'
+    Gitlab.endpoint = 'https://api.example.com/api/v3'
     Gitlab.private_token = 'secret'
   end
 end
