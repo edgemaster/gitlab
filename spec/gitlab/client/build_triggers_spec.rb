@@ -17,10 +17,10 @@ describe Gitlab::Client do
     end
   end
 
-  describe ".trigger" do
+  describe ".trigger_detail" do
     before do
       stub_get("/projects/3/triggers/7b9148c158980bbd9bcea92c17522d", "trigger")
-      @trigger = Gitlab.trigger(3, "7b9148c158980bbd9bcea92c17522d")
+      @trigger = Gitlab.trigger_detail(3, "7b9148c158980bbd9bcea92c17522d")
     end
 
     it "should get the correct resource" do
@@ -62,6 +62,72 @@ describe Gitlab::Client do
     it "should return information about a deleted trigger" do
       expect(@trigger.created_at).to eq("2015-12-23T16:25:56.760Z")
       expect(@trigger.token).to eq("7b9148c158980bbd9bcea92c17522d")
+    end
+  end
+
+  describe ".trigger_build" do
+    after do
+      Gitlab.endpoint = 'https://api.example.com'
+      Gitlab.private_token = 'secret'
+    end
+
+    context "when endpoint is not set" do
+      it "should raise Error::MissingCredentials" do
+        Gitlab.endpoint = nil
+        expect do
+          Gitlab.trigger_build(3, "7b9148c158980bbd9bcea92c17522d", "master", {a: 10})
+        end.to raise_error(Gitlab::Error::MissingCredentials, 'Please set an endpoint to API')
+      end
+    end
+
+    context "when endpoint is set" do
+      before do
+        stub_request(:post, "#{Gitlab.endpoint}/projects/3/trigger/builds").
+          to_return(body: load_fixture('trigger_build'), status: 201)
+      end
+
+      context "when private_token is not set" do
+        it "should not raise Error::MissingCredentials" do
+          Gitlab.private_token = nil
+          expect { Gitlab.trigger_build(3, "7b9148c158980bbd9bcea92c17522d", "master", {a: 10}) }.to_not raise_error
+        end
+      end
+
+      context "without variables" do
+        before do
+          @trigger = Gitlab.trigger_build(3, "7b9148c158980bbd9bcea92c17522d", "master")
+        end
+        it "should get the correct resource" do
+          expect(a_request(:post, "#{Gitlab.endpoint}/projects/3/trigger/builds").
+            with(body: {
+              token: "7b9148c158980bbd9bcea92c17522d",
+              ref: "master"
+            })).to have_been_made
+        end
+
+        it "should return information about the triggered build" do
+          expect(@trigger.id).to eq(8)
+        end
+      end
+
+      context "with variables" do
+        before do
+          @trigger = Gitlab.trigger_build(3, "7b9148c158980bbd9bcea92c17522d", "master", {a: 10})
+        end
+        it "should get the correct resource" do
+          expect(a_request(:post, "#{Gitlab.endpoint}/projects/3/trigger/builds").
+            with(body: {
+              token: "7b9148c158980bbd9bcea92c17522d",
+              ref: "master",
+              variables: {a: "10"}
+            })).to have_been_made
+        end
+
+        it "should return information about the triggered build" do
+          expect(@trigger.id).to eq(8)
+          expect(@trigger.variables.a).to eq("10")
+        end
+      end
     end
   end
 end

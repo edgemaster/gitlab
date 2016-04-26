@@ -96,7 +96,7 @@ module Gitlab
     # Sets a PRIVATE-TOKEN or Authorization header for requests.
     # @raise [Error::MissingCredentials] if private_token and auth_token are not set.
     def set_authorization_header(options, path=nil)
-      unless path == '/session'
+      unless path == '/session' or path =~ /^\/projects\/\d+\/trigger\/builds/
         raise Error::MissingCredentials.new("Please provide a private_token or auth_token for user") unless @private_token
         if @private_token.length <= 20
           options[:headers] = { 'PRIVATE-TOKEN' => @private_token }
