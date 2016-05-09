@@ -78,12 +78,13 @@ class Gitlab::Client
     # @option options [String] :default_branch The default branch of a project.
     # @option options [String] :namespace_id The namespace in which to create a project.
     # @option options [Boolean] :wiki_enabled The wiki integration for a project (0 = false, 1 = true).
-    # @option options [Boolean] :wall_enabled The wall functionality for a project (0 = false, 1 = true).
     # @option options [Boolean] :issues_enabled The issues integration for a project (0 = false, 1 = true).
     # @option options [Boolean] :snippets_enabled The snippets integration for a project (0 = false, 1 = true).
     # @option options [Boolean] :merge_requests_enabled The merge requests functionality for a project (0 = false, 1 = true).
     # @option options [Boolean] :public The setting for making a project public (0 = false, 1 = true).
-    # @option options [Integer] :user_id The user/owner id of a project.
+    # @option options [Boolean] :builds_enabled
+    # @option options [Boolean] :public_builds
+    # @option options [Boolean] :shared_runners_enabled
     # @return [Gitlab::ObjectifiedHash] Information about created project.
     def create_project(name, options={})
       url = options[:user_id] ? "/projects/user/#{options[:user_id]}" : "/projects"
@@ -345,8 +346,17 @@ class Gitlab::Client
     # @param  [Integer] project The ID of a project.
     # @param  [Hash] options A customizable set of options.
     # @option options [String] :name The name of a project
-    # @option options [String] :path The name of a project
-    # @option options [String] :description The name of a project
+    # @option options [String] :path The repository name of a project
+    # @option options [String] :description Short project description
+    # @option options [String] :default_branch
+    # @option options [Boolean] :issues_enabled
+    # @option options [Boolean] :merge_requests_enabled
+    # @option options [Boolean] :builds_enabled
+    # @option options [Boolean] :wiki_enabled
+    # @option options [Boolean] :snippets_enabled
+    # @option options [Boolean] :public if `true` same as setting visibility_level = 20
+    # @option options [Integer] :visibility_level
+    # @option options [Boolean] :public_builds
     # @return [Gitlab::ObjectifiedHash] Information about the edited project.
     def edit_project(id, options={})
       put("/projects/#{id}", query: options)
