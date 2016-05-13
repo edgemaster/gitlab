@@ -1,6 +1,6 @@
 class Gitlab::Client
   # Defines methods related to builds.
-  # @see https://gitlab.doc.ic.ac.uk/help/ci/triggers/README.md
+  # @see https://github.com/gitlabhq/gitlabhq/blob/master/doc/ci/triggers/README.md
   # @see https://github.com/gitlabhq/gitlabhq/blob/master/doc/api/build_triggers.md
   module BuildTriggers
     # Gets a list of the project's build triggers
@@ -51,7 +51,7 @@ class Gitlab::Client
 
     # Trigger the given project build trigger.
     #
-    # @see https://gitlab.doc.ic.ac.uk/help/ci/triggers/README.md
+    # @see https://github.com/gitlabhq/gitlabhq/blob/master/doc/ci/triggers/README.md
     #
     # @example
     #   Gitlab.trigger_build(5, '7b9148c158980bbd9bcea92c17522d', 'master')
@@ -62,12 +62,20 @@ class Gitlab::Client
     # @param  [String] ref Branch name, tag name or commit SHA to build.
     # @param  [Hash] variables A set of build variables to use for the build. (optional)
     # @return [Gitlab::ObjectifiedHash] The trigger.
+    # @note This method doesn't require private_token to be set.
     def trigger_build(project, token, ref, variables={})
-      post("/projects/#{project}/trigger/builds", body: {
+      # Execute trigger endpoint is not under the API path
+      endpoint = URI(@endpoint)
+      endpoint.path = "/projects/#{project}/trigger/builds"
+
+      options = {body: {
         token: token,
         ref: ref,
         variables: variables
-      })
+      }}
+      set_httparty_config options
+
+      self.class.post(endpoint, options)
     end
   end
 end

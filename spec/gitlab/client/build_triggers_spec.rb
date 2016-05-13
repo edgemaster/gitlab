@@ -1,4 +1,5 @@
 require 'spec_helper'
+require 'uri'
 
 describe Gitlab::Client do
   describe ".triggers" do
@@ -66,8 +67,14 @@ describe Gitlab::Client do
   end
 
   describe ".trigger_build" do
+    before do
+      @old_endpoint = Gitlab.endpoint
+      @endpoint = URI(Gitlab.endpoint)
+      @endpoint.path = ''
+    end
+
     after do
-      Gitlab.endpoint = 'https://api.example.com'
+      Gitlab.endpoint = @old_endpoint
       Gitlab.private_token = 'secret'
     end
 
@@ -82,7 +89,7 @@ describe Gitlab::Client do
 
     context "when endpoint is set" do
       before do
-        stub_request(:post, "#{Gitlab.endpoint}/projects/3/trigger/builds").
+        stub_request(:post, "#{@endpoint}/projects/3/trigger/builds").
           to_return(body: load_fixture('trigger_build'), status: 201)
       end
 
@@ -98,7 +105,7 @@ describe Gitlab::Client do
           @trigger = Gitlab.trigger_build(3, "7b9148c158980bbd9bcea92c17522d", "master")
         end
         it "should get the correct resource" do
-          expect(a_request(:post, "#{Gitlab.endpoint}/projects/3/trigger/builds").
+          expect(a_request(:post, "#{@endpoint}/projects/3/trigger/builds").
             with(body: {
               token: "7b9148c158980bbd9bcea92c17522d",
               ref: "master"
@@ -115,7 +122,7 @@ describe Gitlab::Client do
           @trigger = Gitlab.trigger_build(3, "7b9148c158980bbd9bcea92c17522d", "master", {a: 10})
         end
         it "should get the correct resource" do
-          expect(a_request(:post, "#{Gitlab.endpoint}/projects/3/trigger/builds").
+          expect(a_request(:post, "#{@endpoint}/projects/3/trigger/builds").
             with(body: {
               token: "7b9148c158980bbd9bcea92c17522d",
               ref: "master",
